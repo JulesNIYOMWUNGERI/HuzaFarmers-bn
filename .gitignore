@@ -1,0 +1,7 @@
+**/node_modules
+**/.env
+**/.nyc_output
+/coverage
+.DS_Store
+.http
+coverage.lcov

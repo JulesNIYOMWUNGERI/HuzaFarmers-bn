@@ -1,0 +1,53 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.0.2
+  coveralls: coveralls/coveralls@2.0.0
+
+jobs:
+  Test_and_Send_Coverage:
+    environment:
+      CC_TEST_REPOTER_ID: '9c02531d1fcfe9fa66072979b242743ed13cee52ff85f31d928e87bfd353f6f3'
+
+    docker:
+      - image: node:18.15
+      - image: cimg/postgres:14.0
+        environment:
+          POSTGRES_USER: ${DB_USERNAME}
+          POSTGRES_PASSWORD: ${DB_PASSWORD}
+          POSTGRES_HOST: ${DB_HOST}
+          POSTGRES_DB: ${DB_USERNAME}
+
+      - image: cimg/redis:6.2.6
+
+    executor: node/default
+
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          command: npm install
+          name: Install Dependencies
+      - run:
+          command: npm ci
+          name: Install Packages
+      - run:
+          name: Run migration
+          command: npm run migrate
+      - run:
+          name: Install Test Reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+      - run:
+          command: npm test
+          name: Run tests
+      - run:
+          name: code-coverage
+          command: npm run coverage
+      - coveralls/upload
+workflows:
+  Test_and_Coverage:
+    jobs:
+      - Test_and_Send_Coverage
